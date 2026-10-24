@@ -4,7 +4,7 @@ Kişisel blog. Statik site: Markdown yazılar + Astro. Veritabanı, sunucu taraf
 
 ## Gereksinimler
 
-- Node.js >= 20 (bu proje Node 24 ile geliştirildi)
+- Node.js >= 22.23.4 (Astro 7'nin alt sınırı)
 
 ## Komutlar
 
@@ -18,8 +18,11 @@ npm run check    # TypeScript + Astro kontrolü
 
 ## Yeni yazı ekleme
 
-`src/content/blog/` altına bir `.md` dosyası koy. Dosya adı URL olur:
+`src/content/blog/` altına bir dosya koy. Dosya adı URL olur:
 `ilk-yazim.md` → `/yazilar/ilk-yazim/`.
+
+Varsayılan `.md`. İçinde bir Astro bileşeni kullanacaksan `.mdx` yap
+(örnek: `ascii.mdx`) ve gövdenin en üstünde import et.
 
 ```yaml
 ---
@@ -27,34 +30,82 @@ title: 'Yazı başlığı'
 description: 'Listede ve arama sonuçlarında görünen tek cümlelik özet.'
 date: 2026-10-24
 tags: ['etiket']
-cover: ./kapak.png        # opsiyonel; src/assets/ içindeki bir görsel
-coverAlt: 'Görselin alternatif metni'
-draft: false              # true ise yazı yayınlanmaz
+cover: ../../assets/kapak.png   # opsiyonel; src/assets/ içindeki görsel
+coverAlt: 'Görselin alternatif metni'  # cover varsa zorunlu
+draft: false                     # true ise yazı yayınlanmaz
 ---
 ```
 
 Gövdede normal Markdown kullanılır. Görseller `src/assets/` içinde durur ve
-build sırasında otomatik olarak boyutlandırılır (WebP/AVIF).
+build sırasında WebP olarak yeniden boyutlandırılır.
+
+### Taslak akışı
+
+`draft: true` iken yazı **yalnızca `npm run dev` sırasında** görünür: ana
+sayfada "taslak" rozetiyle listelenir ve `/yazilar/<slug>/` açılır. `npm run
+build` taslakları hiç üretmez, RSS'e de girmez. Yayına almak için `draft`
+satırını sil (veya `false` yap).
 
 ## Diyagram ekleme
 
 ````markdown
 ```mermaid
 flowchart LR
+  accTitle: Akış
   A[Fikir] --> B[Yazı] --> C[Yayın]
 ```
 ````
 
 Bu bloklar build sırasında [pele](https://pele.run) ile SVG'ye çevrilir
-(`src/lib/rehype-pele.mjs`). Okuyucuya diyagram motoru indirilmez.
+(`src/lib/remark-pele.mjs`). Okuyucuya diyagram motoru indirilmez.
 
-- Her diyagram iki kez çizilir: geniş ve dar. 720px altında dikey yerleşimli
+- `accTitle` (ve istersen `accDescr`) ekran okuyucu için gereklidir; yoksa
+  build sırasında uyarı çıkar. pele bunları SVG `<title>`/`<desc>` olarak basar.
+  `accTitle` desteklemeyen tiplerde (block, C4, kanban, mindmap) blok başlığına
+  `title="…"` yazılır; eklenti bunu `aria-label` olarak basar.
+- Her diyagram iki kez çizilir: geniş ve dar. 672px altında dikey yerleşimli
   sürüm gösterilir (`src/styles/global.css`).
+- 700px'den geniş diyagramlar küçülmek yerine yatay kaydırılır; kabul ediyorsan
+  bloğa `wide` ekleyip uyarıyı susturabilirsin.
 - Flowchart oklarında CSS ile akan kesik çizgi animasyonu var; hareket
-  hassasiyeti olan okuyucularda kapanır.
+  hassasiyeti olan okuyucularda kapanır. pele'nin kendi kesikli kenarları
+  animasyona dahil edilmez.
 - Yanlış sözdizimi build'i durdurur ve hangi dosyada olduğunu söyler.
 - Bir diyagram tipi desteklenmezse `pele` yerine `rehype-mermaid` kullanmak
   mümkün; yazılar değişmez, sadece `astro.config.mjs` değişir.
+
+## ASCII sanatı (ascii.rest)
+
+`ascii.rest` bileşeni yalnızca `.mdx` içinde kullanılabilir:
+
+```mdx
+import Ascii from 'ascii.rest/astro';
+
+<Ascii piece="deep-reef" label="Mercan kayalığı" />
+<Ascii piece="terminal" mono label="Bir terminal penceresi" />
+```
+
+- Renkli parça `<canvas>` olarak çizilir; JavaScript çalışmadan yer tutucu kutu
+  görünür. Ana sayfadaki hero da bu bileşeni kullanır: `ocean-sunset` canvas'ı ve
+  JavaScript kapalıyken görünen `<noscript>` terminal kartı.
+- `mono` parça `<pre>` olarak sunucuda basılır; JavaScript kapalıyken de
+  görünür ve tema rengini alır.
+- Parça adları: `npx ascii.rest list`.
+- Build çıktısına her parça için bir JS dosyası düşer (~217 dosya); tarayıcı
+  yalnızca sayfada kullanılanı indirir.
+
+## Diller
+
+- Türkçe yazılar: `src/content/blog/*.md` → `/yazilar/<slug>/`
+- İngilizce yazılar: `src/content/blog/en/*.md` → `/en/<slug>/`
+- Dil, dosya yolundan türetilir; frontmatter'da ayrıca `lang` yazılmaz.
+- `translationKey` aynı olan iki dosya birbirinin çevirisi sayılır. Sayfada dil
+  bağlantısı ve `<head>` içinde `hreflang` üretilir.
+- Her yazının çevirisi olmak zorunda değil. Çevirisi olmayan yazıda dil bağlantısı
+  o dilin ana sayfasına gider.
+- Arayüz metinleri `src/i18n.ts` içinde; rota ve şablonlar `lang` geçirir.
+- RSS: `/rss.xml` (TR) ve `/en/rss.xml` (EN).
+- URL üretmek için `postUrl()` kullan; elle yol yazma.
 
 ## Yayına alma
 
@@ -69,16 +120,24 @@ linkler ve Open Graph etiketleri oradan üretiliyor.
 ```
 src/
   config.ts              site başlığı, açıklama, adres
+  i18n.ts                arayüz metinleri (tr/en)
   content.config.ts      yazı şeması (frontmatter doğrulaması)
-  content/blog/*.md      yazılar
+  content/blog/*.md      Türkçe yazılar
+  content/blog/en/*.md   İngilizce yazılar
   assets/                yazı görselleri
   layouts/BaseLayout.astro
-  components/            header, footer
-  lib/rehype-pele.mjs    mermaid → SVG
+  components/            hero, header, footer
+  lib/remark-pele.mjs    mermaid → SVG (remark aşaması)
+  lib/posts.ts           yazı listesi, dil, çeviri eşleşmesi
+  lib/feed.ts            RSS (tr/en)
   pages/
-    index.astro          yazı listesi
+    index.astro          yazı listesi (TR)
     yazilar/[...slug].astro
     hakkinda.astro
+    en/index.astro       yazı listesi (EN)
+    en/[...slug].astro
+    en/about.astro
+    en/rss.xml.ts
     404.astro
     rss.xml.ts
   styles/global.css      tüm tasarım
@@ -86,7 +145,8 @@ src/
 
 ## Tasarım notları
 
-- Gövde serif, arayüz öğeleri sans-serif; satır uzunluğu ~68 karakter.
+- Gövde serif, arayüz öğeleri sans-serif. Kolon `42rem` (672px), metin alanı
+  632px; satır uzunluğu ~70 karakter.
 - Tek vurgu rengi. Karanlık mod `prefers-color-scheme` ile otomatik.
 - Renkler `src/styles/global.css` içindeki değişkenlerde; değiştirmek için
   tek yer var.
