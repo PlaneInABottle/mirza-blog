@@ -1,6 +1,9 @@
 import { render } from 'pele';
 import { visit } from 'unist-util-visit';
 
+const escapeAttr = (value) =>
+  value.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;');
+
 /**
  * ```mermaid kod bloklarını build sırasında pele ile SVG'ye çevirir.
  *
@@ -11,6 +14,10 @@ import { visit } from 'unist-util-visit';
  * Her diyagram iki kez çizilir: geniş (doğal boyut) ve dar (maxWidth ile dikey
  * yerleşime geçebilen). CSS hangisinin görüneceğine karar verir, böylece
  * mobilde küçülen diyagram yerine yeniden düzenlenmiş hâli görünür.
+ *
+ * Blok meta bilgisi:
+ *   ```mermaid title="Zaman çizgisi"   → accTitle üretmeyen tipler için erişilebilir ad
+ *   ```mermaid wide                    → kolona sığmayan genişlik uyarısını sustur
  */
 export default function remarkPele(options = {}) {
   const narrowWidth = options.narrowWidth ?? 320;
@@ -25,29 +32,54 @@ export default function remarkPele(options = {}) {
       const source = (node.value ?? '').trim();
       if (!source) return;
 
+      const metaTitle = node.meta?.match(/title="([^"]*)"/)?.[1];
+      const acceptsWide = /\bwide\b/.test(node.meta ?? '');
+
+      // accTitle'ı desteklemeyen tiplerde (mindmap, block, C4, kanban) meta
+      // başlığını aria-label olarak SVG'ye ekliyoruz.
+      const withLabel = (svg) =>
+        /<title[^>]*>[^<]/.test(svg) || !metaTitle
+          ? svg
+          : svg.replace('<svg ', `<svg aria-label="${escapeAttr(metaTitle)}" `);
+
       try {
         const wideDiagram = render(source, { idPrefix: `pele-${diagram}-w` });
-        const narrow = render(source, {
-          idPrefix: `pele-${diagram}-n`,
-          maxWidth: narrowWidth,
-        }).svg;
-        diagram += 1;
+        const wide = withLabel(wideDiagram.svg);
 
-        // Geniş diyagramlar içerik kolonuna sığmayınca küçülür ve okunmaz hâle gelir.
-        if (wideDiagram.width > wideLimit) {
+        if (!/<title[^>]*>[^<]/.test(wide) && !metaTitle) {
           console.warn(
-            `[remark-pele] ${file?.path ?? 'yazı'}: diyagram ${wideDiagram.width}px geniş ` +
-              `(kolon ~656px). Etiketleri kısalt veya 'flowchart TD' dene.`,
+            `[remark-pele] ${file?.path ?? 'yazı'}: diyagramın erişilebilir adı yok ` +
+              `(accTitle veya title="…" ekle; bazı tipler desteklemez).`,
           );
         }
 
-        const wide = wideDiagram.svg;
+        const narrow = withLabel(
+          render(source, { idPrefix: `pele-${diagram}-n`, maxWidth: narrowWidth }).svg,
+        );
+        diagram += 1;
+
+        const isWide = wideDiagram.width > wideLimit;
+        if (isWide && !acceptsWide) {
+          console.warn(
+            `[remark-pele] ${file?.path ?? 'yazı'}: diyagram ${wideDiagram.width}px geniş ` +
+              `(kolon ~632px); yatay kaydırılacak. Kısaltmak için etiketleri kısalt ` +
+              `veya 'flowchart TD' dene; kabul ediyorsan bloğa 'wide' ekle.`,
+          );
+        }
+
+        // Kaydırılabilir kutu klavyeyle de kaydırılabilsin diye odaklanabilir olmalı.
+        const wideLabel =
+          wide.match(/<title[^>]*>([^<]*)<\/title>/)?.[1]?.trim() || metaTitle;
+        const wideAttrs = isWide
+          ? ` tabindex="0" role="region"` +
+            (wideLabel ? ` aria-label="${escapeAttr(wideLabel)}"` : '')
+          : '';
 
         parent.children[index] = {
           type: 'html',
           value:
-            `<figure class="diagram">` +
-            `<div class="diagram-wide">${wide}</div>` +
+            `<figure class="diagram${isWide ? ' diagram--scroll' : ''}">` +
+            `<div class="diagram-wide"${wideAttrs}>${wide}</div>` +
             `<div class="diagram-narrow">${narrow}</div>` +
             `</figure>`,
         };
