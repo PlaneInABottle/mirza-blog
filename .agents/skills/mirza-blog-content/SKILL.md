@@ -80,4 +80,6 @@ npm run build   # must include the new page; drafts must be absent
 
 - Content and code changes only; no commits, pushes or PRs unless asked.
 - Preserve the zero-JS default and the existing design tokens.
-- Site URL in `src/config.ts` is a placeholder owned by the user.
+- `SITE.url` in `src/config.ts` holds the live domain (`https://ymirzaaltay.com`); RSS,
+  canonical and sitemap derive from it. Publishing a draft needs a push, which is the
+  owner's call. Live verification: `mirza-blog-deploy` skill.

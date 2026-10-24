@@ -5,8 +5,11 @@ Project instructions for AI agents working in this repository.
 ## What this is
 
 Astro 7 static personal blog, Turkish content. No database, no server code, no cookies.
-Client JavaScript exists only where `ascii.rest` is used: the homepage hero and the
-ASCII post.
+Deployed as a Cloudflare Worker with static assets at `https://ymirzaaltay.com`.
+
+Client JavaScript exists only where `ascii.rest` is used (homepage hero and the ASCII
+post) and for the Cloudflare Web Analytics beacon, which the zone injects at the edge
+and which is not part of this repository.
 
 ## Requirements
 
@@ -23,6 +26,23 @@ ASCII post.
 | `npm run preview` | Serve the built output |
 | `npm run check` | `astro check` (TypeScript + Astro) |
 | `npx astro dev status` / `stop` / `logs` | Astro 7 runs `dev` as a daemon |
+| `npx wrangler deploy --dry-run` | Validate the deploy config offline (no auth needed) |
+
+## Deployment
+
+- Push to `main` -> GitHub -> Workers Builds -> `npm run build` -> `npx wrangler deploy`.
+  Nothing reaches production from a working tree; only a push does.
+- `wrangler.toml` is the deploy contract: `[assets]` with `directory = "./dist"` and
+  `not_found_handling = "404-page"`. Do not swap it for the Pages-only
+  `pages_build_output_dir` key: `wrangler deploy` ignores that and fails with
+  "Missing entry-point to Worker script or to assets directory".
+- Production: apex `ymirzaaltay.com` serves the site. `www` 301-redirects to the apex
+  through a zone Redirect Rule; plain HTTP is upgraded by "Always Use HTTPS".
+- TLS is Cloudflare-managed (no origin server); the zone encryption mode is irrelevant
+  for Worker responses and should stay at `Full` or `Full (Strict)`.
+- The zone itself (DNS records, redirect rules, TLS, analytics) is configured in the
+  Cloudflare dashboard by the owner. Agents have no API token: ask, do not guess.
+- See `.agents/skills/mirza-blog-deploy/` for the live verification matrix.
 
 ## Content model
 
@@ -76,17 +96,23 @@ ASCII post.
 ## Known pitfalls (learned)
 
 - `@astrojs/mdx` inherits `markdown.processor` by default (`extendMarkdownConfig: true`), so mermaid works in `.mdx` too. It is declared explicitly in `astro.config.mjs` to freeze that behavior.
+- Never overwrite `astro.config.mjs` wholesale: it must keep `mdx({ extendMarkdownConfig: true })` and `sitemap()`. Dropping the MDX integration silently removes `.mdx` pages (the ASCII post vanished from a build once). Read the file, then edit it.
 - The Astro dev toolbar appears in screenshots and looks like a page bug; it is dev-only.
 - Do not hardcode library counts (e.g. ascii.rest pieces); verify against `node_modules` or the package README.
 - `src/lib/remark-pele.mjs` is `.mjs`; `astro check` does not type-check it.
 - Editing that adapter does not invalidate the content cache: the build keeps the old rendered diagrams. Delete `.astro` and `node_modules/.astro` before rebuilding.
 - `npm run build` excludes drafts; never test draft routes against build output.
+- All posts in `src/content/blog/` are deliberately `draft: true` (reference material). Do not un-draft them while working on infrastructure; publishing is the owner's call.
+- Cloudflare's analytics beacon is injected at the edge **only for browser-like requests**. `curl` with its default user agent never sees it, so an empty `grep cloudflareinsights` does not mean analytics is broken.
+- Never put `Cache-Control: public, no-transform` in `public/_headers`: it blocks edge HTML injection and kills the analytics beacon.
+- `http -> https` and `www -> apex` redirects live in the Cloudflare zone, not in the repo. `_redirects` is not used here.
 - `src/config.ts` içindeki `SITE.url` tek kaynaktır (`https://ymirzaaltay.com`); `astro.config.mjs` bu değeri `site` olarak kullanır. Domain değişirse `public/robots.txt` da güncellenmeli.
 - No code-fence title/filename support (Shiki default). Do not document it as available.
 
 ## Boundaries
 
 - Do not commit, push, or open PRs unless asked.
+- Do not change Cloudflare dashboard state (DNS, redirects, TLS, analytics); report what the owner must click.
 - Keep the zero-JS default; adding client JavaScript needs a concrete reason.
 - Reuse existing patterns: the remark adapter, CSS variables, single `getPosts`.
 - Defer navigation work (sidebar, archive, tags pages) until the post count justifies it (roughly 15-20 posts).
