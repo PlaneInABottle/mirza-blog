@@ -1,0 +1,44 @@
+---
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import { SITE } from '../../config';
+
+const alternates = [
+  { lang: 'tr', href: '/hakkinda/' },
+  { lang: 'en', href: '/en/about/' },
+];
+---
+
+<BaseLayout
+  title="About"
+  description={`About ${SITE.author}.`}
+  lang="en"
+  alternates={alternates}
+>
+  <article>
+    <header class="post-header">
+      <h1>About</h1>
+    </header>
+
+    <div class="prose">
+      <p>
+        This is my personal blog: notes, essays and things I learn. There is no
+        regular publishing schedule; it changes whenever something worth writing
+        about piles up.
+      </p>
+
+      <p>
+        Posts live in this repository as <strong>Markdown</strong>, and the site
+        is generated statically with <a href="https://astro.build">Astro</a>.
+        Diagrams are rendered to SVG at build time with
+        <a href="https://pele.run">pele</a>, so reading posts and diagrams does
+        not require JavaScript.
+      </p>
+
+      <p>
+        You can follow along via <a href="/en/rss.xml">RSS</a>.
+      </p>
+    </div>
+
+    <p class="back-link"><a href="/en/">← All posts</a></p>
+  </article>
+</BaseLayout>

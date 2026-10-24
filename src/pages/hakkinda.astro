@@ -3,7 +3,15 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import { SITE } from '../config';
 ---
 
-<BaseLayout title="Hakkında" description={`${SITE.author} hakkında.`}>
+<BaseLayout
+  title="Hakkında"
+  description={`${SITE.author} hakkında.`}
+  lang="tr"
+  alternates={[
+    { lang: 'tr', href: '/hakkinda/' },
+    { lang: 'en', href: '/en/about/' },
+  ]}
+>
   <article>
     <header class="post-header">
       <h1>Hakkında</h1>
@@ -20,7 +28,8 @@ import { SITE } from '../config';
         Yazılar <strong>Markdown</strong> olarak bu depoda duruyor, site
         <a href="https://astro.build">Astro</a> ile statik olarak üretiliyor.
         Diyagramlar <a href="https://pele.run">pele</a> ile build sırasında
-        SVG'ye çevriliyor, yani sayfaları okumak için JavaScript gerekmiyor.
+        SVG'ye çevriliyor; yazıları ve diyagramları okumak için JavaScript
+        gerekmiyor.
       </p>
 
       <p>
