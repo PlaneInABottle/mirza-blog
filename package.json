@@ -11,7 +11,9 @@
   },
   "dependencies": {
     "@astrojs/markdown-remark": "^7.3.4",
+    "@astrojs/mdx": "^8.1.1",
     "@astrojs/rss": "^4.0.19",
+    "ascii.rest": "^0.4.0",
     "astro": "^7.4.2",
     "pele": "^1.9.1",
     "unist-util-visit": "^5.1.0"
@@ -19,5 +21,8 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.12",
     "typescript": "^6.0.3"
+  },
+  "engines": {
+    "node": ">=22.23.4"
   }
 }
