@@ -1,4 +1,9 @@
-# Cloudflare Pages projesi. `wrangler pages deploy` bu adı kullanır, bu yüzden
-# dashboard'da oluşturulan projenin adı da `mirza-blog` olmalı.
+# Workers static assets: `wrangler deploy` bu dosyayı okuyup dist/ içeriğini
+# yayınlar. Cloudflare'ın yeni projelerde kullandığı yol bu; Pages projelerinde
+# deploy adımını dashboard yönettiği için bu bölüm yok sayılır.
 name = "mirza-blog"
-pages_build_output_dir = "./dist"
+compatibility_date = "2026-10-25"
+
+[assets]
+directory = "./dist"
+not_found_handling = "404-page"
