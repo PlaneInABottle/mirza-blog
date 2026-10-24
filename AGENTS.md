@@ -81,7 +81,7 @@ ASCII post.
 - `src/lib/remark-pele.mjs` is `.mjs`; `astro check` does not type-check it.
 - Editing that adapter does not invalidate the content cache: the build keeps the old rendered diagrams. Delete `.astro` and `node_modules/.astro` before rebuilding.
 - `npm run build` excludes drafts; never test draft routes against build output.
-- `src/config.ts` still uses `https://example.com`; domain wiring is owned by the user, not by agents.
+- `src/config.ts` içindeki `SITE.url` tek kaynaktır (`https://ymirzaaltay.com`); `astro.config.mjs` bu değeri `site` olarak kullanır. Domain değişirse `public/robots.txt` da güncellenmeli.
 - No code-fence title/filename support (Shiki default). Do not document it as available.
 
 ## Boundaries

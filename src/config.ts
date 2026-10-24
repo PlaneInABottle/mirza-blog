@@ -5,8 +5,8 @@ export const SITE = {
   author: 'Yusuf Mirza Altay',
 
   /**
-   * Site adresi. Kendi domainini bağladığında SADECE bu satırı değiştir:
-   * RSS, canonical linkler ve Open Graph etiketleri buradan üretiliyor.
+   * Site adresi. Changelog/RSS, canonical linkler, Open Graph etiketleri,
+   * sitemap ve robots.txt buradan üretiliyor.
    */
-  url: 'https://example.com',
+  url: 'https://ymirzaaltay.com',
 } as const;

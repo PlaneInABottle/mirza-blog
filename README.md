@@ -166,12 +166,17 @@ Bu yolda `_headers` yok sayılır; aynı başlıkları Caddyfile'da vermek gerek
 
 ### Domain
 
-Her iki yolda da domainin nameserver'ları Cloudflare'e taşınır
-(`kozmopath.com` şu an `vida/santino.ns.cloudflare.com`).
+- Kayıt: Squarespace Domains · DNS: Cloudflare (`vida/santino.ns.cloudflare.com`)
+- Apex `https://ymirzaaltay.com` ana adres, `www` ona yönlendirilecek.
 
-**Domain bağlayınca tek yer:** `src/config.ts` içindeki `SITE.url`. RSS, canonical
-linkler ve Open Graph etiketleri oradan üretiliyor. Domain bağlanmadan önce
-`https://example.com` kalıyor.
+**Tek kaynak:** `src/config.ts` içindeki `SITE.url`. `astro.config.mjs` bu değeri
+import ederek `site` alanına veriyor; canonical, `hreflang`, Open Graph, RSS ve
+sitemap hepsi oradan üretiliyor. Adres değişirse yalnızca o satır değişir.
+
+- `sitemap-index.xml` + `sitemap-0.xml`: `@astrojs/sitemap` build sırasında üretir
+  (draft ve 404 hariç).
+- `robots.txt` (`public/`) sitemap'i işaret eder; domain değişirse oradaki adres de
+  güncellenmeli.
 
 ## Yapı
 
