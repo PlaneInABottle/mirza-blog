@@ -1,13 +1,49 @@
 ---
 import { SITE } from '../config';
+import { ui, type Lang } from '../i18n';
+
+interface Props {
+  lang?: Lang;
+  alternateHref?: string;
+}
+
+const { lang = 'tr', alternateHref } = Astro.props;
+const t = ui[lang];
+
+const home = lang === 'en' ? '/en/' : '/';
 ---
 
 <header class="site-header">
   <div class="wrap header-inner">
-    <a class="brand" href="/">{SITE.title}</a>
-    <nav aria-label="Ana menü">
-      <a href="/hakkinda/">Hakkında</a>
-      <a href="/rss.xml">RSS</a>
-    </nav>
+    <a class="brand" href={home} aria-label={t.homeLabel}>{SITE.title}</a>
+
+    <div class="header-side">
+      <nav aria-label={t.navLabel}>
+        <a href={lang === 'en' ? '/en/about/' : '/hakkinda/'}>{t.about}</a>
+        <a href={lang === 'en' ? '/en/rss.xml' : '/rss.xml'}>{t.rss}</a>
+      </nav>
+
+      <div class="lang" role="group" aria-label={t.language}>
+        {
+          lang === 'tr' ? (
+            <span aria-current="true">TR</span>
+          ) : (
+            <a href={alternateHref ?? '/'} hreflang="tr" lang="tr">
+              TR
+            </a>
+          )
+        }
+        <span class="lang-sep" aria-hidden="true">/</span>
+        {
+          lang === 'en' ? (
+            <span aria-current="true">EN</span>
+          ) : (
+            <a href={alternateHref ?? '/en/'} hreflang="en" lang="en">
+              EN
+            </a>
+          )
+        }
+      </div>
+    </div>
   </div>
 </header>

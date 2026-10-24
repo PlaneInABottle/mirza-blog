@@ -1,5 +1,6 @@
 ---
 import { SITE } from '../config';
+import { ui, type Lang } from '../i18n';
 import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import '../styles/global.css';
@@ -9,24 +10,51 @@ interface Props {
   description?: string;
   image?: string;
   type?: 'website' | 'article';
+  noindex?: boolean;
+  lang?: Lang;
+  /** hreflang alternatifleri: diğer dillerdeki eş sayfalar. */
+  alternates?: { lang: string; href: string }[];
 }
 
-const { title, description = SITE.description, image, type = 'website' } = Astro.props;
+const {
+  title,
+  description = SITE.description,
+  image,
+  type = 'website',
+  noindex = false,
+  lang = 'tr',
+  alternates = [],
+} = Astro.props;
+
 const pageTitle = title ? `${title} — ${SITE.title}` : SITE.title;
 const canonical = new URL(Astro.url.pathname, SITE.url).href;
 const ogImage = image ? new URL(image, SITE.url).href : undefined;
+const alternateHref = alternates.find(
+  (entry) => entry.lang !== lang && entry.lang !== 'x-default',
+)?.href;
 ---
 
 <!doctype html>
-<html lang={SITE.lang}>
+<html lang={lang}>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{pageTitle}</title>
     <meta name="description" content={description} />
+    {noindex && <meta name="robots" content="noindex" />}
     <link rel="canonical" href={canonical} />
+    {
+      alternates.map((entry) => (
+        <link rel="alternate" hreflang={entry.lang} href={new URL(entry.href, SITE.url).href} />
+      ))
+    }
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="alternate" type="application/rss+xml" title={SITE.title} href="/rss.xml" />
+    <link
+      rel="alternate"
+      type="application/rss+xml"
+      title={`${SITE.title}${lang === 'en' ? ' — English' : ''}`}
+      href={lang === 'en' ? '/en/rss.xml' : '/rss.xml'}
+    />
     <meta property="og:type" content={type} />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description} />
@@ -36,8 +64,8 @@ const ogImage = image ? new URL(image, SITE.url).href : undefined;
     <meta name="generator" content={Astro.generator} />
   </head>
   <body>
-    <a class="skip" href="#main">İçeriğe geç</a>
-    <Header />
+    <a class="skip" href="#main">{ui[lang].skip}</a>
+    <Header lang={lang} alternateHref={alternateHref} />
     <main id="main" class="wrap">
       <slot />
     </main>

@@ -1,8 +1,8 @@
 export const SITE = {
-  title: 'Mirza',
+  title: 'Yusuf Mirza Altay',
   description: 'Kişisel notlar, denemeler ve küçük keşifler.',
-  author: 'Mirza',
-  lang: 'tr',
+  descriptionEn: 'Personal notes, essays and small discoveries.',
+  author: 'Yusuf Mirza Altay',
 
   /**
    * Site adresi. Kendi domainini bağladığında SADECE bu satırı değiştir:
