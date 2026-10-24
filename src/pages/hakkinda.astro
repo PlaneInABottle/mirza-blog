@@ -1,0 +1,33 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import { SITE } from '../config';
+---
+
+<BaseLayout title="Hakkında" description={`${SITE.author} hakkında.`}>
+  <article>
+    <header class="post-header">
+      <h1>Hakkında</h1>
+    </header>
+
+    <div class="prose">
+      <p>
+        Burası benim kişisel bloğum: notlar, denemeler ve öğrendiklerim. Düzenli
+        bir yayın takvimi yok, ne zaman yazacak bir şey birikirse o zaman
+        güncelleniyor.
+      </p>
+
+      <p>
+        Yazılar <strong>Markdown</strong> olarak bu depoda duruyor, site
+        <a href="https://astro.build">Astro</a> ile statik olarak üretiliyor.
+        Diyagramlar <a href="https://pele.run">pele</a> ile build sırasında
+        SVG'ye çevriliyor, yani sayfaları okumak için JavaScript gerekmiyor.
+      </p>
+
+      <p>
+        Bana ulaşmak istersen <a href="/rss.xml">RSS</a> ile takip edebilirsin.
+      </p>
+    </div>
+
+    <p class="back-link"><a href="/">← Tüm yazılar</a></p>
+  </article>
+</BaseLayout>
