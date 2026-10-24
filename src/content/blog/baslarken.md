@@ -2,6 +2,7 @@
 title: 'Başlarken'
 description: 'Bu blogda yazı yazarken kullanabileceğin Markdown özellikleri: tablo, liste, kod, görsel, dipnot ve ham HTML.'
 date: 2026-10-24
+draft: true
 tags: ['meta', 'markdown']
 translationKey: 'baslarken'
 cover: ../../assets/kapak.png

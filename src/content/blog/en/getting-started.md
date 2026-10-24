@@ -2,6 +2,7 @@
 title: 'Getting started'
 description: 'How posts are written and which Markdown features you can use: tables, lists, code, images, footnotes.'
 date: 2026-10-24
+draft: true
 tags: ['meta', 'markdown']
 translationKey: 'baslarken'
 cover: ../../../assets/kapak.png

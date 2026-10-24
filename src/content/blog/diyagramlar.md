@@ -2,6 +2,7 @@
 title: 'Yazı içinde diyagram'
 description: 'Mermaid diyagramlarının tamamı: hangi tip neye benziyor, erişilebilir ad nasıl verilir, genişlik ve animasyon kuralları.'
 date: 2026-10-24
+draft: true
 tags: ['astro', 'pele', 'mermaid']
 cover: ../../assets/diyagram.png
 coverAlt: 'Koyu zeminde turkuaz bir gradyan'
