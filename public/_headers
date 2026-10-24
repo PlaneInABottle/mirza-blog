@@ -1,0 +1,11 @@
+# Cloudflare Pages bu dosyayı okur; başka sunucularda (Caddy, nginx) yok sayılır.
+# Amaç: parmak izli build varlıklarını kalıcı önbelleğe almak, geri kalanı
+# güvenli varsayılanlarla sunmak.
+
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/*
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=()

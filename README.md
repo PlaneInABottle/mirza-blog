@@ -109,11 +109,69 @@ import Ascii from 'ascii.rest/astro';
 
 ## Yayına alma
 
-Site tamamen statik. `dist/` klasörünü herhangi bir statik sunucuya koyabilirsin
-(Cloudflare Pages, nginx, Caddy, GitHub Pages...).
+Site tamamen statik (`dist/`, 10 sayfa, ~1.7 MB). İki kurulu yol var; ikisi de
+aynı çıktıyı kullanır, yalnızca sunum katmanı değişir.
 
-**Domain bağlarken tek yer:** `src/config.ts` içindeki `SITE.url`. RSS, canonical
-linkler ve Open Graph etiketleri oradan üretiliyor.
+### A) Cloudflare Pages (önerilen)
+
+Statik içerik CDN'den sunulur; dizüstü kapalıyken de site ayakta kalır,
+her push'ta otomatik yayın ve geri alma (rollback) vardır.
+
+Dashboard'da tek seferlik:
+
+1. Cloudflare → Workers & Pages → Create → Pages → **Connect to Git**.
+2. Depo: `PlaneInABottle/mirza-blog`, üretim dalı `main`.
+3. Framework: Astro · Build command: `npm run build` · Output: `dist`
+4. Proje adı: `mirza-blog` (`wrangler.toml` ile aynı olmalı).
+5. Custom domains → domaini ekle (zone zaten Cloudflare'deyse CNAME'i kendi kurar).
+
+Node sürümü `engines` ve `.nvmrc` ile 22'ye sabit; Pages varsayılanı daha
+eskisi olabilir, build log'unda Node sürümünü bir kez doğrula.
+
+CLI'dan yayınlamak istersen (Git entegrasyonu yerine):
+
+```bash
+wrangler login                       # tarayıcıda OAuth, bir kez
+npm run build
+wrangler pages deploy dist --project-name mirza-blog
+```
+
+`public/_headers` bu yolda etkindir: `/_astro/*` bir yıl `immutable`,
+sayfalar `nosniff` + `Referrer-Policy` ile sunulur. `404.html` otomatik
+kullanılır.
+
+### B) Kontrol PC'de tunnel + statik sunucu
+
+Mevcut ev lab düzeniyle aynı (kozmopath, divingbuddies): site, laptop açıkken
+yayında olur. Dinamik bir parça (yorum servisi gibi) gerekirse zaten bu yol
+kullanılacak.
+
+```bash
+# 1) statik sunucu (Caddy host'ta kurulu)
+sudo mkdir -p /srv/www/mirza-blog && sudo chown "$USER" /srv/www/mirza-blog
+npm run build && rsync -a --delete dist/ /srv/www/mirza-blog/
+
+# 2) tunnel ingress (yedek al, sonra düzenle)
+cp ~/.cloudflared/config.yml ~/.cloudflared/config.yml.pre-blog-$(date +%Y%m%dT%H%M%S)
+#    - hostname: <domain>
+#      service: http://127.0.0.1:8088
+cloudflared tunnel ingress validate
+systemctl --user restart cloudflared-kozmopath
+
+# 3) DNS kaydı (cert.pem ile, dashboard gerekmez)
+cloudflared tunnel route dns kozmopath-home-server <domain>
+```
+
+Bu yolda `_headers` yok sayılır; aynı başlıkları Caddyfile'da vermek gerekir.
+
+### Domain
+
+Her iki yolda da domainin nameserver'ları Cloudflare'e taşınır
+(`kozmopath.com` şu an `vida/santino.ns.cloudflare.com`).
+
+**Domain bağlayınca tek yer:** `src/config.ts` içindeki `SITE.url`. RSS, canonical
+linkler ve Open Graph etiketleri oradan üretiliyor. Domain bağlanmadan önce
+`https://example.com` kalıyor.
 
 ## Yapı
 

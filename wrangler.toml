@@ -1,0 +1,4 @@
+# Cloudflare Pages projesi. `wrangler pages deploy` bu adı kullanır, bu yüzden
+# dashboard'da oluşturulan projenin adı da `mirza-blog` olmalı.
+name = "mirza-blog"
+pages_build_output_dir = "./dist"
