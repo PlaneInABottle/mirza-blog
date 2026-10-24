@@ -1,0 +1,83 @@
+---
+title: 'Terminalden gelen manzara'
+description: 'Animasyonlu ASCII sanatını yazıya eklemek: bileşenin prop''ları, mono ve canvas farkı, MDX kuralları.'
+date: 2026-10-24
+tags: ['ascii', 'astro', 'mdx']
+---
+
+import Ascii from 'ascii.rest/astro';
+
+Bir çizimi sayfaya koymanın en hafif yolu onu metin olarak taşımak. [ascii.rest](https://ascii.rest/) bunun uç örneği: MIT lisanslı, 200'ü aşkın parça animasyonlu ASCII.
+
+<Ascii piece="deep-reef" label="Mercan kayalığı ve balıklar, karakterlerle çizilmiş" />
+
+## İki mod, iki farklı takas
+
+Kütüphane parçayı iki şekilde basıyor; hangisini seçeceğin neye ihtiyacın olduğuna bağlı:
+
+- **Renkli parça** (`deep-reef` gibi): çıktı bir `<canvas>`. İlk kare tarayıcıda çiziliyor, yani script gelene kadar yer tutucu bir kutu görünüyor. Karşılığında 200×100'lük sahneler kolona sığacak şekilde ölçekleniyor.
+- **`mono` parça**: çıktı bir `<pre>`. İlk kare sunucuda HTML'e basılıyor, tema rengini alıyor ve JavaScript hiç çalışmasa da yazı eksik görünmüyor. Karşılığında genişlik karakter sayısıyla sabit.
+
+Küçük bir parçayı `mono` ile dene:
+
+<Ascii piece="terminal" mono label="Bir terminal penceresi" />
+
+## Bileşenin prop'ları
+
+| Prop | Tip | Ne yapar |
+| --- | --- | --- |
+| `piece` | metin | Parçanın adı (zorunlu), ör. `deep-reef` |
+| `mono` | boolean | Renkli parçayı tek renk metin olarak basar |
+| `label` | metin | Ekran okuyucu için açıklama |
+| `fps` | sayı | Kare hızı; `0` tek kare çizer |
+| `options` | nesne | Parçanın kendi seçenekleri; `motion: true` hareket hassasiyetini geçersiz kılar |
+| `class` | metin | `<ascii-art>` elementine sınıf ekler |
+
+Parça adlarını görmek için:
+
+```bash
+npx ascii.rest list
+```
+
+## Sütun sayısı
+
+Yazı alanı ~630 piksel. `terminal` 62×18; rahat sığıyor. `deep-reef` 200×100 olduğu için `mono` modda taşar, canvas modunda ise ölçeklenir. Kural: 80 sütunun üstündeki parçalarda `mono` kullanma.
+
+Renkli parçanın boyutunu `class` ile verirsin; yükseklik verme, oranı kendisi korur. Astro'nun kapsamlı `<style>` bloğu bileşenin kendi elementine ulaşmadığı için kural global olmalı:
+
+```astro
+<Ascii piece="deep-reef" class="manzara" label="Mercan kayalığı" />
+
+<style is:global>
+  .manzara {
+    max-width: 480px;
+  }
+</style>
+```
+
+## MDX kuralları
+
+Bu yazı `.mdx`, çünkü `.md` dosyaları bileşen kabul etmiyor. Bileşeni gövdenin en üstünde import et.
+
+- MDX aynı Markdown hattını devraldığı için `mermaid` blokları burada da SVG'ye çevriliyor.
+- Metinde `{` ve `}` JS ifadesi sayılır; normal metinde kullanacaksan kaçırman gerekir.
+- Başlık, tablo, liste, dipnot gibi her şey `.md` ile aynı.
+
+## Hareket hassasiyeti
+
+Script, hareketi yalnızca parça ekranda ve sekme açıkken oynatıyor. `prefers-reduced-motion: reduce` açıksa tek karede duruyor. Diyagram oklarında da aynı kural geçerli: hareket bir süs, içeriğin şartı değil.
+
+## Nasıl ekleniyor
+
+```astro
+---
+import Ascii from 'ascii.rest/astro';
+---
+
+<Ascii piece="deep-reef" label="Mercan kayalığı" />
+<Ascii piece="terminal" mono label="Bir terminal penceresi" />
+```
+
+## Maliyet
+
+Build çıktısına her parça için bir JS dosyası düşüyor (pakette ~217 parça). Tarayıcı yalnızca sayfada kullanılanı indiriyor; ascii.rest kullanmayan sayfalarda hiç script yok. Yine de dağıtımda ~1.3 MB'lık bir dosya kalabalığı oluşuyor; tek parça importuna geçebilirsin ama bileşenin kolaylığını kaybedersin.

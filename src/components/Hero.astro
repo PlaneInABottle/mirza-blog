@@ -1,0 +1,39 @@
+---
+import Ascii from 'ascii.rest/astro';
+import { SITE } from '../config';
+import type { Lang } from '../i18n';
+
+interface Props {
+  lang?: Lang;
+}
+
+const { lang = 'tr' } = Astro.props;
+
+const title = lang === 'en' ? '~/notes' : '~/notlar';
+const listing = lang === 'en' ? 'posts  about  rss' : 'yazilar  hakkinda  rss';
+
+// Sabit genişlik: kutunun sağ kenarı her satırda aynı hizada kalsın.
+const width = 34;
+const head = `+-- ${title} `;
+const card = [
+  head + '-'.repeat(width - head.length - 1) + '+',
+  `| ${'$ ls'.padEnd(width - 4)} |`,
+  `| ${listing.padEnd(width - 4)} |`,
+  '+' + '-'.repeat(width - 2) + '+',
+].join('\n');
+
+const label =
+  lang === 'en'
+    ? 'A sunset over the sea, with a pine headland and lit clouds'
+    : 'Denizin üzerinde batan güneş, çam burnu ve bulutlar';
+
+const heading = lang === 'en' ? SITE.descriptionEn : SITE.description;
+---
+
+<div class="hero-scene">
+  <Ascii piece="ocean-sunset" label={label} />
+  <noscript>
+    <pre class="intro-ascii" aria-hidden="true">{card}</pre>
+  </noscript>
+</div>
+<h1 class="sr-only">{heading}</h1>
