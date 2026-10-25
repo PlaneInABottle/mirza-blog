@@ -1,7 +1,7 @@
 export const SITE = {
   title: 'Yusuf Mirza Altay',
-  description: 'Kişisel notlar, denemeler ve küçük keşifler.',
-  descriptionEn: 'Personal notes, essays and small discoveries.',
+  description: 'Denemeler, öğrendiklerim ve düşüncelerim.',
+  descriptionEn: 'Essays, things I learn and my thoughts.',
   author: 'Yusuf Mirza Altay',
 
   /**
