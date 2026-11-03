@@ -1,7 +1,7 @@
 ---
 title: "Tek ihtiyacınız lokal ortam"
-description: "Agent'ın okuduğu dosyalar ve bütün servisleri tek çatı altında toplayan çalışma alanı: lokal ortamın ilk yarısı."
-date: 2026-11-03
+description: "Lokalde çalışma düzenini AI'a göre düzenlemek."
+date: 2026-11-04
 tags: ["ai", "agents", "skill", "docker"]
 translationKey: "calisma-ortami"
 ---
@@ -15,34 +15,61 @@ import Ascii from "ascii.rest/astro";
   class="kapak-ascii"
 />
 
-Artık çalışırken tek tek kodları onaylamamaya başladım. AI sessionını açtığımda üstümdeki taskları Jira'dan kontrol ediyorum, hangilerinin yapılması gerektiğini söylüyorum.
+Artık çalışırken tek tek kodları onaylamıyorum. AI sessionını açtığımda üstümdeki taskları
+Jira'dan kontrol ediyorum ve hangilerinin yapılması gerektiğini söylüyorum.
 
-İlk başta task açıklamalarında eksiklikler var mı, belirlenmemiş ya da atlanmış detaylar var mı, onlara karar veriyor; yapılacak iş tamamen belli olunca coordinator agent'tan bunlar için gerekli subagent'ları çalıştırıp taskı yapmasını istiyorum.
+İlk başta task açıklamalarında eksiklikler var mı, belirlenmemiş ya da atlanmış detaylar
+var mı, onlara karar veriyor; yapılacak iş tamamen belli olunca coordinator agent'tan
+bunlar için gerekli subagent'ları çalıştırıp taskı yapmasını istiyorum.
 
-Agent task için hangi servisler gerekiyorsa bağımlılıklarıyla birlikte ayağa kaldırıyor, gateway'den token alıyor, bununla authenticate olup backend'i deniyor, frontend'i agent-browser ile açıp düzgün çalışıp çalışmadığını kontrol ediyor ve değerlerin database'e düzgün yazıldığına bakıyor. Bir sorun olursa logları inceleyip kendisi yine işi çözüyor.
+AI task için hangi servisler gerekiyorsa bağımlılıklarıyla birlikte ayağa kaldırıyor,
+gateway'den token alıyor, bununla authenticate olup backend'i deniyor, frontend'i
+agent-browser ile açıp düzgün çalışıp çalışmadığını kontrol ediyor ve değerlerin
+database'e düzgün yazıldığına bakıyor. Bir sorun olursa logları inceleyip kendisi yine işi
+çözüyor.
 
-Yazı boyunca anlatmak istediğim tek bir durum var: artık AI ile çalışırken darboğaz çoğu zaman model değil ya da maliyet değil, ortam. Daha iyi bir prompt yazmak, gereksiz tool'ları denemek yerine üzerinde çalıştığı ortamı bir kere düzgün kurmak ve sonrasında feedback'lerle geliştirmek, sonraki her oturumu değiştiriyor ve yeni task'ı yapmayı kolaylaştırıyor. Yapay zekâ, çalıştığı ortamı ona göre düzenlediğinizde en iyi sonucu veriyor.
+AI ile çalışırken darboğaz çoğu zaman model değil ya da maliyet değil, ortam. Daha iyi bir
+prompt yazmak, gereksiz tool'ları denemek yerine üzerinde çalıştığı ortamı agentların daha
+iyi çalışabileceği şekilde kurmak ve sonrasında feedback'lerle geliştirmek, sonraki her
+oturumu değiştiriyor ve yeni task'ı yapmayı kolaylaştırıyor. Yapay zekâ, çalıştığı ortamı
+ona göre düzenlediğinizde en iyi sonucu veriyor.
 
-Örnek olarak dört servisli bir ödeme sistemini (`payment-project`) kullanacağım. Servis adları, portlar ve dosya adları temsilî olacak; lakin anlattığım yöntemler kendi iş yerimde ve projelerimde uyguladığım mekanizmaların aynısı olacak.
+Örnek olarak dört servisli bir ödeme sistemini (`payment-project`) kullanacağım. Servis
+adları, portlar ve dosya adları temsilî olacak; ama anlattığım yöntemler kendim çalışırken
+uyguladığım mekanizmaların aynısı.
 
 ## AGENTS.md ve skill dosyaları
 
-AGENTS.md'yi ya da Claude kullanıyorsanız CLAUDE.md'yi bildiğinizi varsayıyorum. Kısaca: bir dizinde çalışırken AI'ın her oturumun başında sistemine yüklediği dosya. Kalıcı kurallar ve proje hakkındaki bilgiler genelde burada duruyor; bu da AI'ın her oturumda sıfırdan başlamasını önlüyor.
+AGENTS.md'yi ya da Claude kullanıyorsanız CLAUDE.md'yi bildiğinizi varsayıyorum. Kısaca:
+bir dizinde çalışırken AI'ın her oturumun başında sistemine yüklediği dosya. Kalıcı
+kurallar ve proje hakkındaki bilgiler genelde burada duruyor; bu da AI'ın her oturumda
+sıfırdan bilgisiz başlamasını önlüyor.
 
-Skill'ler benzer ama önemli bir ayrımları var: AI onları isteyince, ihtiyaç duyduğu anda okuyor. Boştayken neredeyse hiç yer kaplamıyor; AI'ın context'ine sadece dosyanın başındaki açıklama yükleniyor, belki kısa iki cümle:
+Skill'ler benzer ama önemli bir ayrımları var: AI onları isteyince, ihtiyaç duyduğu anda
+okuyor. Boştayken neredeyse hiç yer kaplamıyor; AI'ın context'ine sadece dosyanın
+başındaki açıklama yükleniyor, belki kısa iki cümle:
 
 ```markdown
 ---
 name: refund-flow
-description: İade talebinin refund-service, payment-service ve ledger-service arasında nasıl ilerlediğini anlatır. İade akışına dokunan her değişiklikte oku.
+description:
+  İade talebinin refund-service, payment-service ve ledger-service arasında nasıl
+  ilerlediğini anlatır. İade akışına dokunan her değişiklikte oku.
 ---
 ```
 
-AI da bu açıklamaya göre, karşılaştığı durumda skill'i çağırıp çağırmamaya karar veriyor. Yani skill'in işe yaraması, açıklamasının skill'i AI'ın ne zaman çağırması gerektiğini söylemesine bağlı. "Refund ile ilgili şeyler" iyi bir açıklama değilken, mesela "lokal ortamı ayağa kaldırırken çağır" gibi bir açıklama daha iyi.
+AI da bu açıklamaya göre, karşılaştığı durumda skill'i çağırıp çağırmamaya karar veriyor.
+Yani skill'in işe yaraması, açıklamasının skill'i AI'ın ne zaman çağırması gerektiğini
+söylemesine bağlı. "Refund ile ilgili şeyler" iyi bir açıklama değilken, mesela "lokal
+ortamı ayağa kaldırırken çağır" gibi bir açıklama daha iyi.
 
-AI'ın ilk başta sadece açıklamaları görüyor olmasının en büyük avantajı şu: skill'leri olabildiğince spesifik yazabilirsiniz. Yani günün sonunda elinizde 20 tane bile skill dosyası olsa, içerikleri özgün olduktan sonra zararı olmayacaktır.
+AI'ın ilk başta sadece açıklamaları görüyor olmasının en büyük avantajı skill'leri
+olabildiğince spesifik yazmaya imkan vermesi. Yani günün sonunda elinizde 20 tane bile
+skill dosyası olsa, içerikleri özgün olduktan sonra zararı olmayacaktır.
 
-AGENTS.md ve skill'ler hakkında uyguladığım kural basit: **bir bilginin tek kaynağı olacak.** Kalıcı kurallar ve proje hakkındaki genel bilgiler AGENTS.md'de durur; prosedürler, spesifik yöntemler ve teknolojiler kendi skill'inde durur.
+AGENTS.md ve skill'ler hakkında uyguladığım kural basit: **bir bilginin tek kaynağı
+olacak.** Kalıcı kurallar ve proje hakkındaki genel bilgiler AGENTS.md'de durur;
+prosedürler, spesifik yöntemler ve teknolojiler kendi skill'inde durur.
 
 Örnek projede skill listesi böyle görünüyor:
 
@@ -60,15 +87,28 @@ AGENTS.md ve skill'ler hakkında uyguladığım kural basit: **bir bilginin tek 
 | `jira-task`         | Task'ın kabul kriterlerini ve Jira geçmişini toplarken                  |
 | `ship-path`         | Ortama çıkış, imaj etiketi ve geri dönüş gerektiğinde                   |
 
-Dikkat ederseniz hiçbiri "genel bilgi" değil. Hepsi belli bir durumda okunuyor ve o durumun dışında kimse onları açmıyor.
+Dikkat ederseniz hiçbiri "genel bilgi" değil. Hepsi belli bir durumda okunuyor ve o
+durumun dışında okunmadan kalabiliyorlar.
 
-Bir örnek: sağlayıcıdan gelen webhook doğrulanırken `webhook-signature` açılıyor; hangi başlığın imzalandığını, secret'ın nereden geldiğini ve aynı olayın iki kez işlenmesini neyin engellediğini anlatıyor. Şemaya alan eklerken `db-migration` açılıyor; migration sırası, geri dönüşü ve seed verisine etkisi orada yazıyor. İkisi tek dosyada dursaydı, webhook'a bakan biri migration sırasını da okumak zorunda kalırdı. Skill'lerin gövdelerini de kısa tutuyorum: uzun komut listeleri, alan tabloları ve örnek payload'lar skill'in yanındaki ayrı referans dosyalarında duruyor.
+Bir örnek: sağlayıcıdan gelen webhook doğrulanırken `webhook-signature` açılıyor; hangi
+başlığın imzalandığını, secret'ın nereden geldiğini ve aynı olayın iki kez işlenmesini
+neyin engellediğini anlatıyor. Şemaya alan eklerken `db-migration` açılıyor; migration
+sırası, geri dönüşü ve seed verisine etkisi orada yazıyor. Her skill'i olabildiğince
+spesifik yapmaya çalışıyorum.
+
+Skill'lerin gövdelerini de kısa tutuyorum: uzun komut listeleri, alan tabloları ve örnek
+payload'lar skill'in yanındaki ayrı referans dosyalarında duruyor.
 
 ## Hata döngüsü: agent'ın hafızasını yazmak
 
-AGENTS.md'nin ve skill dosyalarının sürekli gelişen bir projede olduğunu düşünürsek bu bilgilerin sürekli güncellenmesi gerekiyor. Bir noktada bakım yükü de demek oluyor bu. Benim en çok kullandığım yöntem herhangi bir task'ı bitirdikten sonra, session'ı kapatmadan ya da belki session ortasında, AI'a takıldığı yerleri not almasını, neden takıldığını çıkarmasını ve bunun bir daha yaşanmaması için skill'leri ve AGENTS.md'yi güncellemesini söylüyorum:
+Aktif bir projede çalışıyorsanız AGENTS.md'nin ve skill içeriklerinin sürekli
+güncellenmesi gerekiyor ki bu da ekstra bakım yükü getiriyor. Ben herhangi bir task'ı
+bitirdikten sonra, session'ı kapatmadan ya da belki session ortasında, AI'a takıldığı
+yerleri not almasını, neden takıldığını çıkarmasını ve bunun bir daha yaşanmaması için
+skill'leri ve AGENTS.md'yi güncellemesini söylüyorum:
 
-> takıldığın yerleri not al, neden takıldığını çıkar, bir daha yaşanmaması için skill'leri ve AGENTS.md'yi güncelle, gerekiyorsa yeni bir skill oluştur
+> takıldığın yerleri not al, neden takıldığını çıkar, bir daha yaşanmaması için skill'leri
+> ve AGENTS.md'yi güncelle, gerekiyorsa yeni bir skill oluştur
 
 ```mermaid
 flowchart LR
@@ -80,9 +120,14 @@ flowchart LR
   O --> H
 ```
 
-Bu ufak gibi görünen şey aslında AI için hayati öneme sahip olabiliyor. Çünkü AI çalışırken basit bir işi bile çoğu zaman üç dört komut denedikten sonra doğrulayabiliyor; bu, veritabanında bir tablo aramak olabilir, servisleri ayağa kaldırmak olabilir. AI karanlıkta ilerlediği için deneme yanılma yapıyor ya da bilmediklerini yolda keşfediyor.
+Bu ufak gibi görünen iş aslında AI için hayati öneme sahip olabiliyor. Çünkü AI çalışırken
+basit bir işi bile çoğu zaman üç dört komut denedikten sonra doğrulayabiliyor; bu,
+veritabanında bir tablo aramak olabilir, servisleri ayağa kaldırmak olabilir. AI
+karanlıkta ilerlediği için deneme yanılma yapıyor ya da bilmediklerini yolda keşfediyor.
 
-Mesela bir task'ta AI bir servisi `npm run start` ile kaldırmayı denemiş, üç komut boşa gitmiş ve sonunda doğru yolu kendisi bulmuş olsun. Session sonunda `local-runtime` skill'ine şu iki satır ekleniyor:
+Mesela bir task'ta AI bir servisi `npm run start` ile kaldırmayı denemiş, üç komut boşa
+gitmiş ve sonunda doğru yolu kendisi bulmuş olsun. Session sonunda `local-runtime`
+skill'ine şu iki satır ekleniyor:
 
 ```markdown
 ## Servisleri ayağa kaldırma
@@ -94,11 +139,18 @@ Mesela bir task'ta AI bir servisi `npm run start` ile kaldırmayı denemiş, ü�
 
 Bir sonraki session'da AI aynı komutu denemiyor, doğrudan script'e gidiyor.
 
-İlk birkaç hafta bu döngü çok fazla değişiklik getirebilir. Skill dosyaları sürekli değişiyor, bazen aynı kuralı iki kere yazdırabilirsiniz. Ama zamanla AI'ın yaptığı hataların belirgin şekilde düştüğünü ve deneme yanılmanın azaldığını göreceksiniz.
+İlk birkaç hafta bu döngü çok fazla değişiklik getirebilir ve gereksiz bir işmiş gibi
+gelebilir. Ama zamanla AI'ın yaptığı hataların belirgin şekilde düştüğünü ve deneme
+yanılmanın azaldığını göreceksiniz.
 
-Uyguladığım diğer yöntem ise agent'ların yapısı ile ilgili. Ben genelde coordinator bir agent ve altında worker agent'lar kullanıyorum, maliyeti düşürebilmek ve işlerimi aslında daha spesifik şekilde yaptırabilmek için. Bir agent'a ne kadar spesifik bir iş verirseniz sonuç o kadar iyi oluyor.
+Uyguladığım diğer yöntem ise agent'ların yapısı ile ilgili. Ben genelde coordinator bir
+agent ve altında worker agent'lar kullanıyorum, maliyeti düşürebilmek ve işlerimi aslında
+daha spesifik şekilde yaptırabilmek için. Bir agent'a ne kadar spesifik bir iş verirseniz
+sonuç o kadar iyi oluyor.
 
-Tabii coordinator agent, worker agent'ların direkt bütün session konuşmasını görmüyor, sadece en sonda yazdığı mesajı görebiliyor. Bundan dolayı worker agent'ların sistem promptlarına şunu ekliyorum:
+Tabii coordinator agent, worker agent'ların direkt bütün session konuşmasını görmüyor,
+sadece en sonda yazdığı mesajı görebiliyor. Bundan dolayı worker agent'ların sistem
+promptlarına şunu ekliyorum:
 
 ```markdown
 ## friction observed
@@ -106,13 +158,20 @@ Tabii coordinator agent, worker agent'ların direkt bütün session konuşmasın
 Takıldığın yerleri, sürtünme yaratan yerleri bu başlığın altında raporla.
 ```
 
-Bu da her worker agent çalıştığında aslında takıldığı yerleri de coordinator'a bildirmesini sağlıyor.
+Bu da her worker agent çalıştığında aslında takıldığı yerleri de coordinator'a
+bildirmesini sağlıyor.
 
 ## Tek repo yetmiyor
 
-Diğer bir konu çalışma dizini. Gerçek bir projede çalışıyorsanız genelde tek bir repoda çalışmıyor olursunuz. En az dört beş servisin, bir veritabanının ve dışarıya bağımlılıkların olduğu bir ortamı düşünün.
+Diğer bir konu çalışma dizini. Gerçek bir projede çalışıyorsanız genelde tek bir repoda
+çalışmıyorsunuzdur. En az dört beş servisin, bir veritabanının ve dışarıya bağımlılıkların
+olduğu bir ortamı hayal etmek daha gerçekçi.
 
-Yaptığım hatalardan bir tanesi, bir repo'nun içine girip session'ı başlatmak ve task'ı burada yapmaya çalışmak oluyordu. Elbette task, girdiğim repo'yla ilgiliyse (diyelim `refund-service`) o servisin dizininde çalışmak mantıklı geliyor. Ama burada büyük bir yanılsama var: çoğu zaman AI'ın dışarıdaki servislere bakması ya da eksik olduğu kısımları öğrenmesi gerekiyor, bu da o dışarıdaki repo'lara ziyaret demek.
+Yaptığım hatalardan bir tanesi, bir repo'nun içine girip session'ı başlatmak ve task'ı
+burada yapmaya çalışmak oluyordu. Elbette task, girdiğim repo'yla ilgiliyse (diyelim
+`refund-service`) o servisin dizininde çalışmak mantıklı geliyor. Ama burada büyük bir
+yanılsama var: çoğu zaman AI'ın dışarıdaki servislere bakması ya da eksik olduğu kısımları
+öğrenmesi gerekiyor, bu da o dışarıdaki repo'lara ziyaret anlamına geliyor.
 
 ```mermaid
 flowchart TB
@@ -126,13 +185,18 @@ flowchart TB
   A --> R
 ```
 
-Bu çok büyük bir sorun olmasa da asıl sorun AGENTS.md ve skill dosyalarının güncellenmesi oluyor. Skill'leri neye göre yaratıp güncelleyeceğim? Tek bir servise göre mi? Diğer repo'lardaki bilgileri içerecek mi? İçermeyecekse eksik kalacak. İçerirse aynı bilgi ikinci bir repo'da tekrar edecek, iki hafta sonra biri güncellenip diğeri unutulacak.
+Bu çok büyük bir sorun olmasa da asıl sorun AGENTS.md ve skill dosyalarının güncellenmesi
+oluyor. Skill'leri neye göre yaratıp güncelleyeceğim? Tek bir servise göre mi? Diğer
+repo'lardaki bilgileri içerecek mi? İçermeyecekse eksik kalacak. İçerirse aynı bilgi
+ikinci bir repo'da tekrar edecek, iki hafta sonra biri güncellenip diğeri unutulacak.
 
-AI'ın bunları bilmesi lazım... derken, aslında çalışma ortamımı projedeki bütün servisleri içeri alacak şekilde bir üst dizine taşımanın çok daha mantıklı olduğunu fark ettim.
+AI'ın bunları bilmesi lazım... derken, aslında çalışma ortamımı projedeki bütün servisleri
+içeri alacak şekilde bir üst dizine taşımanın çok daha mantıklı olduğunu fark ettim.
 
 ## Çalışma alanını bir seviye yukarı taşımak
 
-Böylece AI bütün projeyi çerçeveleyecek, ben de skill'leri hem servislere göre ayrı ayrı, hem de servislerin birlikte çalışan mantığını aynı dosyada tutabilecektim:
+Böylece AI bütün projeyi çerçeveleyecek, ben de skill'leri hem servislere göre ayrı ayrı,
+hem de servislerin birlikte çalışan mantığını aynı dosyada tutabilecektim:
 
 ```mermaid
 flowchart TB
@@ -160,6 +224,12 @@ payment-project/
 └── checkout-web/
 ```
 
-Örneğin iade akışı tek repo'da bitmiyor: `refund-service` talebi alıyor, `payment-service` tutarı doğruluyor, `ledger-service` kaydı düşüyor. Artık `refund-flow` skill'i bu üç adımı ve hangi repo'da ne olduğunu tek yerde anlatıyor; servise özgü detaylar ise kendi skill dosyalarında kalıyor. Yukarıda bahsettiğim gibi skill yaratmanın neredeyse hiç maliyeti olmadığı için, biraz fazla skill oluşacak gibi görünse de sorun olmuyor.
+Örneğin iade akışı tek repo'da bitmiyor: `refund-service` talebi alıyor, `payment-service`
+tutarı doğruluyor, `ledger-service` kaydı düşüyor. Artık `refund-flow` skill'i bu üç adımı
+ve hangi repo'da ne olduğunu tek yerde anlatıyor; servise özgü detaylar ise kendi skill
+dosyalarında kalıyor. Yukarıda bahsettiğim gibi skill yaratmanın neredeyse hiç maliyeti
+olmadığı için, biraz fazla skill oluşacak gibi görünse de sorun olmuyor.
 
-Sonuçta ortam, agent'ın tek bir dosyaya değil bütün projeye baktığı bir yer oldu: skill'ler servisler arası akışı tek yerde anlatıyor, çalışma alanı bütün repo'ları çerçeveliyor. Geriye servisleri ayağa kaldırmak kalıyor.
+Sonuçta ortam, agent'ın tek bir dosyaya değil bütün projeye baktığı bir yer oldu:
+skill'ler servisler arası akışı tek yerde anlatıyor, çalışma alanı bütün repo'ları
+çerçeveliyor. Geriye servisleri ayağa kaldırmak kalıyor.

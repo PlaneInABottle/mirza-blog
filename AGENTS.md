@@ -46,6 +46,9 @@ and which is not part of this repository.
 
 ## Content model
 
+- Prose `.md`/`.mdx` files are wrapped at 90 columns: `.prettierrc` sets
+  `proseWrap: "always"`. Keep new paragraphs wrapped the same way so a save in an
+  editor running prettier does not produce a whole-file diff.
 - Posts live in `src/content/blog/`. Default `.md`; use `.mdx` only when the post needs a component.
 - Schema: `src/content.config.ts`. Required: `title`, `description`, `date`. Optional: `tags`, `draft`, `cover`, `coverAlt`.
 - `cover` requires `coverAlt` (schema `refine`).
