@@ -1,7 +1,7 @@
 ---
 title: "Tek ihtiyacınız lokal ortam"
 description: "Agent'ın okuduğu dosyalar ve bütün servisleri tek çatı altında toplayan çalışma alanı: lokal ortamın ilk yarısı."
-date: 2026-10-26
+date: 2026-11-03
 tags: ["ai", "agents", "skill", "docker"]
 translationKey: "calisma-ortami"
 ---
@@ -21,9 +21,9 @@ Artık çalışırken tek tek kodları onaylamamaya başladım. AI sessionını 
 
 Agent task için hangi servisler gerekiyorsa bağımlılıklarıyla birlikte ayağa kaldırıyor, gateway'den token alıyor, bununla authenticate olup backend'i deniyor, frontend'i agent-browser ile açıp düzgün çalışıp çalışmadığını kontrol ediyor ve değerlerin database'e düzgün yazıldığına bakıyor. Bir sorun olursa logları inceleyip kendisi yine işi çözüyor.
 
-Bu yazı boyunca anlatmak istediğim tek bir durum var: artık AI ile çalışırken darboğaz çoğu zaman model değil ya da maliyet değil, ortam. Daha iyi bir prompt yazmak, gereksiz tool'ları denemek yerine üzerinde çalıştığı ortamı bir kere düzgün kurmak ve sonrasında feedback'lerle geliştirmek, sonraki her oturumu değiştiriyor ve yeni task'ı yapmayı kolaylaştırıyor. Yapay zekâ, çalıştığı ortamı ona göre düzenlediğinizde en iyi sonucu veriyor.
+Yazı boyunca anlatmak istediğim tek bir durum var: artık AI ile çalışırken darboğaz çoğu zaman model değil ya da maliyet değil, ortam. Daha iyi bir prompt yazmak, gereksiz tool'ları denemek yerine üzerinde çalıştığı ortamı bir kere düzgün kurmak ve sonrasında feedback'lerle geliştirmek, sonraki her oturumu değiştiriyor ve yeni task'ı yapmayı kolaylaştırıyor. Yapay zekâ, çalıştığı ortamı ona göre düzenlediğinizde en iyi sonucu veriyor.
 
-Yazı boyunca örnek olarak dört servisli bir ödeme sistemini (`payment-project`) kullanacağım. Servis adları, portlar ve dosya adları temsilî olacak; lakin anlattığım yöntemler kendi iş yerimde ve projelerimde uyguladığım mekanizmaların aynısı olacak.
+Örnek olarak dört servisli bir ödeme sistemini (`payment-project`) kullanacağım. Servis adları, portlar ve dosya adları temsilî olacak; lakin anlattığım yöntemler kendi iş yerimde ve projelerimde uyguladığım mekanizmaların aynısı olacak.
 
 ## AGENTS.md ve skill dosyaları
 
